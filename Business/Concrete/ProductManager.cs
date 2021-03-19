@@ -3,6 +3,8 @@ using Business.BusinessAspects.Autofac;
 using Business.CCs;
 using Business.Constants;
 using Business.ValidationRules.FluentValidation;
+using Core.Aspects.Autofac.Caching;
+using Core.Aspects.Autofac.Cashing;
 using Core.Aspects.Autofac.Validation;
 using Core.CrossCuttingConcerns.Validation;
 using Core.Utilities.Business;
@@ -32,9 +34,12 @@ namespace Business.Concrete
             
 
         }
+
+
         //claim : product.add , admin
         [SecuredOperation("product.add,admin")]
         [ValidationAspect(typeof(ProductValidator))]
+        [CacheRemoveAspect("Get")]
         public IResult Add(Product product)
         {
             
@@ -59,10 +64,10 @@ namespace Business.Concrete
 
 
             return new ErrorResult();
-
-
         }
 
+
+        [CacheAspect]//key,value
         public IDataResult<List<Product>> GetAll()
         {
             if(DateTime.Now.Hour==13)
@@ -73,30 +78,38 @@ namespace Business.Concrete
             return new SuccessDataResult<List<Product>>( _productDal.GetAll(),Messages.ProductsListed);
         }
 
+
         public IDataResult<List<Product>> GetAllByCategoryId(int id)
         {
             return new SuccessDataResult<List<Product>> (_productDal.GetAll(p => p.CategoryId == id));
         }
 
+
+        [CacheAspect]//key,value
         public IDataResult<Product> GetById(int productId)
         {
             return new SuccessDataResult<Product>( _productDal.Get(p => p.ProductId == productId));
         }
+
 
         public IDataResult<List<Product>> GetByUnitPrice(decimal min, decimal max)
         {
             return new SuccessDataResult<List<Product>>( _productDal.GetAll(p=> p.UnitPrice>=min && p.UnitPrice<=max));
         }
 
+
         public IDataResult<List<ProductDetailDto>> GetProductDetails()
         {
             return new SuccessDataResult<List<ProductDetailDto>> (_productDal.GetProductDetails());
         }
 
+
+        [CacheRemoveAspect("Get")]
         public IResult Update(Product product)
         {
             throw new NotImplementedException();
         }
+
 
         private IResult CheckProductCountOfCategoryCorrect(int categoryId)
         {
